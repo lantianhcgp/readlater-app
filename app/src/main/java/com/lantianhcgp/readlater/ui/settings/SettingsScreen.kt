@@ -33,28 +33,22 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text("设置") },
-                colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
-                scrollBehavior = scrollBehavior
-            )
+            LargeTopAppBar(title = { Text("设置") }, colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface), scrollBehavior = scrollBehavior)
         }
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp)) {
             Text("AI 模型配置", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
             Text("当前 Provider: ${uiState.llmConfig.provider}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = uiState.llmConfig.baseUrl, onValueChange = viewModel::updateBaseUrl, label = { Text("Base URL") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = uiState.llmConfig.apiKey, onValueChange = viewModel::updateApiKey, label = { Text("API Key") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = uiState.llmConfig.model, onValueChange = viewModel::updateModel, label = { Text("模型名称") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(uiState.llmConfig.baseUrl, viewModel::updateBaseUrl, label = { Text("Base URL") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(uiState.llmConfig.apiKey, viewModel::updateApiKey, label = { Text("API Key") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(uiState.llmConfig.model, viewModel::updateModel, label = { Text("模型名称") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Spacer(Modifier.height(32.dp))
             Text("关于", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
             Text("ReadLater v1.0.0", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("开源 AI 驱动的稍后阅读 App", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

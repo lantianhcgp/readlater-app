@@ -41,10 +41,7 @@ import com.lantianhcgp.readlater.ui.components.TagChip
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ReaderScreen(
-    onBack: () -> Unit,
-    viewModel: ReaderViewModel = hiltViewModel()
-) {
+fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -72,59 +69,46 @@ fun ReaderScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (uiState.article != null) {
-            val article = uiState.article!!
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = article.title ?: article.url,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = buildString {
-                        append(article.sourceDomain)
-                        article.readingTimeMinutes?.let { append(" · $it 分钟阅读") }
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (uiState.tags.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        uiState.tags.forEach { TagChip(name = it.name) }
+        } else {
+            val article = uiState.article
+            if (article != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                ) {
+                    Text(article.title ?: article.url, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    Text(buildString { append(article.sourceDomain); article.readingTimeMinutes?.let { append(" · $it 分钟阅读") } }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (uiState.tags.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            uiState.tags.forEach { TagChip(it.name) }
+                        }
                     }
-                }
-                article.summary?.let { summary ->
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(14.dp)
-                    ) {
-                        Text("✨ AI 摘要", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    article.summary?.let { s ->
+                        Spacer(Modifier.height(16.dp))
+                        Column(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primaryContainer).padding(14.dp)
+                        ) {
+                            Text("✨ AI 摘要", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.height(6.dp))
+                            Text(s, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
                     }
+                    article.plainText?.let { t ->
+                        Spacer(Modifier.height(20.dp))
+                        Text(t, style = MaterialTheme.typography.bodyLarge, lineHeight = MaterialTheme.typography.bodyLarge.lineHeight)
+                    }
+                    if (article.status == ArticleStatus.PROCESSING) {
+                        Spacer(Modifier.height(20.dp))
+                        CircularProgressIndicator(Modifier.height(24.dp), strokeWidth = 2.dp)
+                        Text("AI 正在处理中...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    }
+                    Spacer(Modifier.height(32.dp))
                 }
-                article.plainText?.let { text ->
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(text, style = MaterialTheme.typography.bodyLarge, lineHeight = MaterialTheme.typography.bodyLarge.lineHeight)
-                }
-                if (article.status == ArticleStatus.PROCESSING) {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    CircularProgressIndicator(modifier = Modifier.height(24.dp), strokeWidth = 2.dp)
-                    Text("AI 正在处理中...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                }
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
