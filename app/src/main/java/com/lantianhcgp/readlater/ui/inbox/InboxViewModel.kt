@@ -4,32 +4,38 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lantianhcgp.readlater.data.repository.ArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class InboxViewModel @Inject constructor(
-    articleRepository: ArticleRepository
+    private val articleRepository: ArticleRepository
 ) : ViewModel() {
+    private val _uiState = MutableStateFlow(InboxUiState())
+    val uiState: StateFlow<InboxUiState> = _uiState.asStateFlow()
 
-    val uiState: StateFlow<InboxUiState> = articleRepository
-        .getAllArticles()
-        .map { articles ->
-            InboxUiState(
-                articles = articles,
-                isLoading = false
-            )
+    private val _searchQuery = MutableStateFlow("")
+
+    init {
+        viewModelScope.launch {
+            _searchQuery.flatMapLatest { query ->
+                if (query.isBlank()) articleRepository.getAllArticles()
+                else articleRepository.searchArticles(query)
+            }.collect { articles ->
+                _uiState.update { it.copy(articles = articles, isLoading = false) }
+            }
         }
-        .catch { e ->
-            emit(InboxUiState(error = e.message, isLoading = false))
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = InboxUiState()
-        )
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        _searchQuery.value = query
+    }
 }

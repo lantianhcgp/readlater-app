@@ -1,33 +1,43 @@
 package com.lantianhcgp.readlater.ui.reader
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,12 +92,14 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                     Text(article.title ?: article.url, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
                     Text(buildString { append(article.sourceDomain); article.readingTimeMinutes?.let { append(" · $it 分钟阅读") } }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
                     if (uiState.tags.isNotEmpty()) {
                         Spacer(Modifier.height(12.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             uiState.tags.forEach { TagChip(it.name) }
                         }
                     }
+
                     article.summary?.let { s ->
                         Spacer(Modifier.height(16.dp))
                         Column(
@@ -98,10 +110,50 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                             Text(s, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                     }
+
+                    // Highlights section
+                    if (uiState.highlights.isNotEmpty()) {
+                        Spacer(Modifier.height(16.dp))
+                        Text("🖍️ 高亮标注", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(8.dp))
+                        uiState.highlights.forEach { highlight ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(highlight.selectedText, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+                                    highlight.note?.let { note ->
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                IconButton(onClick = { viewModel.deleteHighlight(highlight) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                            Spacer(Modifier.height(6.dp))
+                        }
+                    }
+
                     article.plainText?.let { t ->
                         Spacer(Modifier.height(20.dp))
-                        Text(t, style = MaterialTheme.typography.bodyLarge, lineHeight = MaterialTheme.typography.bodyLarge.lineHeight)
+                        Text(
+                            text = t,
+                            style = MaterialTheme.typography.bodyLarge,
+                            lineHeight = MaterialTheme.typography.bodyLarge.lineHeight,
+                            modifier = Modifier.clickable {
+                                // On text click, show selection dialog for demo
+                                // In production, use TextSelectionContainer
+                                viewModel.onTextSelected(t.take(100))
+                            }
+                        )
                     }
+
                     if (article.status == ArticleStatus.PROCESSING) {
                         Spacer(Modifier.height(20.dp))
                         CircularProgressIndicator(Modifier.height(24.dp), strokeWidth = 2.dp)
@@ -110,6 +162,34 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                     Spacer(Modifier.height(32.dp))
                 }
             }
+        }
+
+        // Note dialog
+        if (uiState.showNoteDialog) {
+            var noteText by remember { mutableStateOf("") }
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissNoteDialog() },
+                title = { Text("添加标注") },
+                text = {
+                    Column {
+                        Text("选中的文字:", style = MaterialTheme.typography.labelMedium)
+                        Text(uiState.pendingHighlightText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = noteText,
+                            onValueChange = { noteText = it },
+                            label = { Text("笔记（可选）") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.saveHighlight(noteText) }) { Text("保存") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissNoteDialog() }) { Text("取消") }
+                }
+            )
         }
     }
 }
