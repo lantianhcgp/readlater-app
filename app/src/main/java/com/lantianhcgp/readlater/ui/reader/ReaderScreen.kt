@@ -30,7 +30,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextSelectionContainer
+
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -350,7 +350,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
 
                     Spacer(Modifier.height(20.dp))
 
-                    TextSelectionContainer {
+                    Column {
                         Column {
                             if (contentBlocks.isNotEmpty()) {
                                 contentBlocks.forEach { block ->
