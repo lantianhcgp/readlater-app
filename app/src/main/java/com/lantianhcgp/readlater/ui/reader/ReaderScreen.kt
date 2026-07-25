@@ -12,9 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,8 +30,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TextSelectionContainer
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -128,6 +127,118 @@ private fun parseHtmlToBlocks(html: String): List<ContentBlock> {
 
     processElement(doc)
     return blocks
+}
+
+@Composable
+private fun ContentBlockItem(block: ContentBlock) {
+    when (block) {
+        is ContentBlock.Paragraph -> {
+            Text(
+                text = block.text,
+                style = MaterialTheme.typography.bodyLarge,
+                lineHeight = 28.sp,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+        is ContentBlock.Heading -> {
+            val style = when (block.level) {
+                1 -> MaterialTheme.typography.headlineLarge
+                2 -> MaterialTheme.typography.headlineMedium
+                3 -> MaterialTheme.typography.headlineSmall
+                4 -> MaterialTheme.typography.titleLarge
+                else -> MaterialTheme.typography.titleMedium
+            }
+            Text(
+                text = block.text,
+                style = style,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+        is ContentBlock.ListItem -> {
+            Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                Text(
+                    text = "• ",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = block.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    lineHeight = 28.sp
+                )
+            }
+        }
+        is ContentBlock.Quote -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = block.text,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        is ContentBlock.Code -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(12.dp)
+            ) {
+                block.language?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = block.text,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        fontSize = 13.sp
+                    )
+                )
+            }
+        }
+        is ContentBlock.Image -> {
+            AsyncImage(
+                model = block.url,
+                contentDescription = block.caption,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.FillWidth
+            )
+            block.caption?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+        }
+        is ContentBlock.Divider -> {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -240,123 +351,18 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                     Spacer(Modifier.height(20.dp))
 
                     TextSelectionContainer {
-                        if (contentBlocks.isNotEmpty()) {
-                            contentBlocks.forEach { block ->
-                                when (block) {
-                                    is ContentBlock.Paragraph -> {
-                                        Text(
-                                            text = block.text,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            lineHeight = 28.sp,
-                                            modifier = Modifier.padding(vertical = 4.dp)
-                                        )
-                                    }
-                                    is ContentBlock.Heading -> {
-                                        val style = when (block.level) {
-                                            1 -> MaterialTheme.typography.headlineLarge
-                                            2 -> MaterialTheme.typography.headlineMedium
-                                            3 -> MaterialTheme.typography.headlineSmall
-                                            4 -> MaterialTheme.typography.titleLarge
-                                            else -> MaterialTheme.typography.titleMedium
-                                        }
-                                        Text(
-                                            text = block.text,
-                                            style = style,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(vertical = 8.dp)
-                                        )
-                                    }
-                                    is ContentBlock.ListItem -> {
-                                        Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                                            Text(
-                                                text = "• ",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                            Text(
-                                                text = block.text,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                lineHeight = 28.sp
-                                            )
-                                        }
-                                    }
-                                    is ContentBlock.Quote -> {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 8.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                                .padding(12.dp)
-                                        ) {
-                                            Text(
-                                                text = block.text,
-                                                style = MaterialTheme.typography.bodyLarge.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                    is ContentBlock.Code -> {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 8.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                                .padding(12.dp)
-                                        ) {
-                                            block.language?.let {
-                                                Text(
-                                                    text = it,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                            Text(
-                                                text = block.text,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                                    fontSize = 13.sp
-                                                )
-                                            )
-                                        }
-                                    }
-                                    is ContentBlock.Image -> {
-                                        AsyncImage(
-                                            model = block.url,
-                                            contentDescription = block.caption,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 8.dp)
-                                                .clip(RoundedCornerShape(8.dp)),
-                                            contentScale = ContentScale.FillWidth
-                                        )
-                                        block.caption?.let {
-                                            Text(
-                                                text = it,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.padding(bottom = 8.dp)
-                                            )
-                                        }
-                                    }
-                                    is ContentBlock.Divider -> {
-                                        Spacer(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 12.dp)
-                                                .height(1.dp)
-                                                .background(MaterialTheme.colorScheme.outlineVariant)
-                                        )
-                                    }
+                        Column {
+                            if (contentBlocks.isNotEmpty()) {
+                                contentBlocks.forEach { block ->
+                                    ContentBlockItem(block = block)
                                 }
+                            } else if (article.plainText != null) {
+                                Text(
+                                    text = article.plainText,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    lineHeight = 28.sp
+                                )
                             }
-                        } else if (article.plainText != null) {
-                            Text(
-                                text = article.plainText,
-                                style = MaterialTheme.typography.bodyLarge,
-                                lineHeight = 28.sp
-                            )
                         }
                     }
 
