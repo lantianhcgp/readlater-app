@@ -1,7 +1,6 @@
 package com.lantianhcgp.readlater.ui.addlink
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,11 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pending
-
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -121,11 +119,17 @@ fun AddLinkScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        ProcessStep.entries.forEach { step ->
+                        val steps = listOf(
+                            ProcessStep.FETCHING to "抓取网页",
+                            ProcessStep.FORMATTING to "清洗排版",
+                            ProcessStep.SUMMARIZING to "生成摘要",
+                            ProcessStep.TAGGING to "生成标签"
+                        )
+                        
+                        steps.forEach { (step, label) ->
                             val isCurrentStep = uiState.currentStep == step
                             val isCompleted = uiState.currentStep != null && 
                                 ProcessStep.entries.indexOf(uiState.currentStep) > ProcessStep.entries.indexOf(step)
-                            val isPending = !isCurrentStep && !isCompleted
 
                             Row(
                                 modifier = Modifier
@@ -149,7 +153,7 @@ fun AddLinkScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = step.displayName,
+                                    text = label,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = when {
                                         isCompleted -> MaterialTheme.colorScheme.onSurfaceVariant
