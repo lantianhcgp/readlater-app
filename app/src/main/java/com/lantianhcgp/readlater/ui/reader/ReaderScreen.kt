@@ -92,7 +92,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(start = indentation, vertical = 6.dp)
+                                        .padding(horizontal = indentation, vertical = 6.dp)
                                         .clickable {
                                             scope.launch { drawerState.close() }
                                         }
