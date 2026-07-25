@@ -30,7 +30,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,196 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.lantianhcgp.readlater.data.model.ArticleStatus
 import com.lantianhcgp.readlater.ui.components.TagChip
-import org.jsoup.Jsoup
-
-sealed class ContentBlock {
-    data class Paragraph(val text: String) : ContentBlock()
-    data class Heading(val text: String, val level: Int) : ContentBlock()
-    data class ListItem(val text: String, val ordered: Boolean = false) : ContentBlock()
-    data class Quote(val text: String) : ContentBlock()
-    data class Code(val text: String, val language: String? = null) : ContentBlock()
-    data class Image(val url: String, val caption: String? = null) : ContentBlock()
-    data class Divider(val text: String = "---") : ContentBlock()
-}
-
-private fun parseHtmlToBlocks(html: String): List<ContentBlock> {
-    val doc = Jsoup.parse(html)
-    val blocks = mutableListOf<ContentBlock>()
-
-    fun processElement(element: org.jsoup.nodes.Element) {
-        for (child in element.children()) {
-            when (child.tagName()) {
-                "h1", "h2", "h3", "h4", "h5", "h6" -> {
-                    val level = child.tagName().removePrefix("h").toIntOrNull() ?: 1
-                    val text = child.text().trim()
-                    if (text.isNotBlank()) blocks.add(ContentBlock.Heading(text, level))
-                }
-                "p" -> {
-                    val text = child.text().trim()
-                    if (text.isNotBlank()) blocks.add(ContentBlock.Paragraph(text))
-                }
-                "ul", "ol" -> {
-                    val isOrdered = child.tagName() == "ol"
-                    child.select("li").forEach { li ->
-                        val text = li.text().trim()
-                        if (text.isNotBlank()) blocks.add(ContentBlock.ListItem(text, isOrdered))
-                    }
-                }
-                "blockquote" -> {
-                    val text = child.text().trim()
-                    if (text.isNotBlank()) blocks.add(ContentBlock.Quote(text))
-                }
-                "pre" -> {
-                    val code = child.selectFirst("code")
-                    val language = code?.className()?.removePrefix("language-")?.takeIf { it.isNotBlank() }
-                    val text = (code ?: child).text().trim()
-                    if (text.isNotBlank()) blocks.add(ContentBlock.Code(text, language))
-                }
-                "figure" -> {
-                    val img = child.selectFirst("img")
-                    val caption = child.selectFirst("figcaption")?.text()
-                    if (img != null) {
-                        val src = img.attr("abs:src").ifBlank { img.attr("data-src") }
-                        if (src.isNotBlank()) blocks.add(ContentBlock.Image(src, caption))
-                    }
-                }
-                "img" -> {
-                    val src = child.attr("abs:src").ifBlank { child.attr("data-src") }
-                    if (src.isNotBlank()) blocks.add(ContentBlock.Image(src, null))
-                }
-                "hr" -> blocks.add(ContentBlock.Divider())
-                "div", "section", "article", "main" -> processElement(child)
-                else -> {
-                    if (child.children().isEmpty() || child.children().none {
-                            it.tagName() in listOf("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "pre", "blockquote", "figure", "img")
-                        }) {
-                        val text = child.text().trim()
-                        if (text.isNotBlank() && text.length > 10) {
-                            blocks.add(ContentBlock.Paragraph(text))
-                        }
-                    } else {
-                        processElement(child)
-                    }
-                }
-            }
-        }
-    }
-
-    processElement(doc)
-    return blocks
-}
-
-@Composable
-private fun ContentBlockItem(block: ContentBlock) {
-    when (block) {
-        is ContentBlock.Paragraph -> {
-            Text(
-                text = block.text,
-                style = MaterialTheme.typography.bodyLarge,
-                lineHeight = 28.sp,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-        }
-        is ContentBlock.Heading -> {
-            val style = when (block.level) {
-                1 -> MaterialTheme.typography.headlineLarge
-                2 -> MaterialTheme.typography.headlineMedium
-                3 -> MaterialTheme.typography.headlineSmall
-                4 -> MaterialTheme.typography.titleLarge
-                else -> MaterialTheme.typography.titleMedium
-            }
-            Text(
-                text = block.text,
-                style = style,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-        is ContentBlock.ListItem -> {
-            Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                Text(
-                    text = "• ",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = block.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 28.sp
-                )
-            }
-        }
-        is ContentBlock.Quote -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = block.text,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        is ContentBlock.Code -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(12.dp)
-            ) {
-                block.language?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Text(
-                    text = block.text,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        fontSize = 13.sp
-                    )
-                )
-            }
-        }
-        is ContentBlock.Image -> {
-            AsyncImage(
-                model = block.url,
-                contentDescription = block.caption,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.FillWidth
-            )
-            block.caption?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-        }
-        is ContentBlock.Divider -> {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp)
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -274,10 +83,6 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
         } else {
             val article = uiState.article
             if (article != null) {
-                val contentBlocks = remember(article.content) {
-                    article.content?.let { parseHtmlToBlocks(it) } ?: emptyList()
-                }
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -350,18 +155,72 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
 
                     Spacer(Modifier.height(20.dp))
 
-                    Column {
-                        Column {
-                            if (contentBlocks.isNotEmpty()) {
-                                contentBlocks.forEach { block ->
-                                    ContentBlockItem(block = block)
+                    article.plainText?.let { text ->
+                        val lines = remember(text) { text.split("\n") }
+                        
+                        lines.forEach { line ->
+                            val trimmed = line.trim()
+                            when {
+                                trimmed.isEmpty() -> {
+                                    Spacer(Modifier.height(8.dp))
                                 }
-                            } else if (article.plainText != null) {
-                                Text(
-                                    text = article.plainText,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    lineHeight = 28.sp
-                                )
+                                trimmed.startsWith("## ") -> {
+                                    Text(
+                                        text = trimmed.removePrefix("## "),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
+                                trimmed.startsWith("### ") -> {
+                                    Text(
+                                        text = trimmed.removePrefix("### "),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(vertical = 6.dp)
+                                    )
+                                }
+                                trimmed.startsWith("> ") -> {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .padding(12.dp)
+                                    ) {
+                                        Text(
+                                            text = trimmed.removePrefix("> "),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                trimmed.startsWith("- ") || trimmed.startsWith("• ") -> {
+                                    Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                                        Text(
+                                            text = "• ",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = trimmed.removePrefix("- ").removePrefix("• "),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            lineHeight = 28.sp
+                                        )
+                                    }
+                                }
+                                trimmed.startsWith("```") -> {
+                                    // Skip code fence markers
+                                }
+                                else -> {
+                                    Text(
+                                        text = trimmed,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        lineHeight = 28.sp,
+                                        modifier = Modifier.padding(vertical = 2.dp)
+                                    )
+                                }
                             }
                         }
                     }

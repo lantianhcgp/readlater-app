@@ -25,7 +25,7 @@ data class AgentResult(
 
 enum class ProcessStep(val displayName: String) {
     FETCHING("正在抓取网页内容..."),
-    PARSING("正在解析文章结构..."),
+    FORMATTING("AI 正在清洗排版内容..."),
     SUMMARIZING("AI 正在生成摘要..."),
     TAGGING("AI 正在生成标签..."),
     DONE("处理完成"),
@@ -68,27 +68,32 @@ class AgentOrchestrator @Inject constructor(
             }
 
             val title = fetchJson.optString("title", null)
-            val plainText = fetchJson.optString("plainText", "")
+            val content = fetchJson.optString("content", "")
             val imageUrl = fetchJson.optString("imageUrl", null)
             val sourceDomain = fetchJson.optString("sourceDomain", null)
             val readingTime = fetchJson.optInt("readingTimeMinutes", 0)
 
-            Logger.i(TAG, "网页抓取成功: 标题=$title, 域名=$sourceDomain, 字数=${plainText.length}")
-            _currentStep.value = ProcessStep.PARSING
-            _stepMessage.value = "正在解析文章结构..."
+            Logger.i(TAG, "网页抓取成功: 标题=$title, 域名=$sourceDomain")
 
-            Logger.d(TAG, "开始生成摘要...")
+            _currentStep.value = ProcessStep.FORMATTING
+            _stepMessage.value = "AI 正在清洗排版内容..."
+            Logger.d(TAG, "开始用 AI 清洗排版内容...")
+
+            val formattedContent = toolExecutor.executeFormatContent(content, title, provider)
+            Logger.i(TAG, "内容清洗完成: ${formattedContent.take(100)}...")
+
             _currentStep.value = ProcessStep.SUMMARIZING
             _stepMessage.value = "AI 正在生成摘要..."
+            Logger.d(TAG, "开始生成摘要...")
 
-            val summary = toolExecutor.executeSummarize(plainText, title, provider)
+            val summary = toolExecutor.executeSummarize(formattedContent, title, provider)
             Logger.i(TAG, "摘要生成完成: ${summary?.take(50)}...")
 
             Logger.d(TAG, "开始生成标签...")
             _currentStep.value = ProcessStep.TAGGING
             _stepMessage.value = "AI 正在生成标签..."
 
-            val tagsJson = toolExecutor.executeAutoTag(plainText, title, provider)
+            val tagsJson = toolExecutor.executeAutoTag(formattedContent, title, provider)
             Logger.i(TAG, "标签生成完成: $tagsJson")
 
             val tags = try {
@@ -98,18 +103,21 @@ class AgentOrchestrator @Inject constructor(
                 emptyList()
             }
 
-            Logger.i(TAG, "处理完成: 标题=$title, 标签=$tags, 阅读时间=${readingTime}分钟")
+            val wordCount = formattedContent.split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
+            val readingTimeMin = maxOf(1, (wordCount.toDouble() / 200).toInt())
+
+            Logger.i(TAG, "处理完成: 标题=$title, 标签=$tags, 字数=$wordCount")
             _currentStep.value = ProcessStep.DONE
             _stepMessage.value = "处理完成"
 
             AgentResult(
                 title = title,
                 summary = summary,
-                plainText = plainText,
+                plainText = formattedContent,
                 tags = tags,
                 imageUrl = imageUrl,
                 sourceDomain = sourceDomain,
-                readingTimeMinutes = if (readingTime > 0) readingTime else null
+                readingTimeMinutes = readingTimeMin
             )
         } catch (e: Exception) {
             Logger.e(TAG, "处理出错: ${e.message}")

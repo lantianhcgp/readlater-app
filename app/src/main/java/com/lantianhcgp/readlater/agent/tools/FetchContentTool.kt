@@ -15,23 +15,6 @@ class FetchContentTool @Inject constructor(
 
     companion object {
         const val NAME = "fetch_content"
-
-        val DEFINITION = com.lantianhcgp.readlater.agent.ToolDefinition(
-            function = com.lantianhcgp.readlater.agent.FunctionDefinition(
-                name = NAME,
-                description = "Fetch and parse the content of a web page URL. Returns title, description, text content, image URL, source domain, and estimated reading time.",
-                parameters = mapOf(
-                    "type" to "object",
-                    "properties" to mapOf(
-                        "url" to mapOf(
-                            "type" to "string",
-                            "description" to "The URL of the web page to fetch"
-                        )
-                    ),
-                    "required" to listOf("url")
-                )
-            )
-        )
     }
 
     suspend fun execute(url: String): String = withContext(Dispatchers.IO) {
@@ -53,7 +36,7 @@ class FetchContentTool @Inject constructor(
             JSONObject().apply {
                 put("title", parsed.title)
                 put("description", parsed.description)
-                put("plainText", parsed.plainText)
+                put("content", parsed.content)
                 put("imageUrl", parsed.imageUrl ?: JSONObject.NULL)
                 put("sourceDomain", parsed.sourceDomain)
                 put("readingTimeMinutes", parsed.readingTimeMinutes)

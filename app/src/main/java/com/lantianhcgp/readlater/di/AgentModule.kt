@@ -2,6 +2,7 @@ package com.lantianhcgp.readlater.di
 
 import com.lantianhcgp.readlater.agent.tools.AutoTagTool
 import com.lantianhcgp.readlater.agent.tools.FetchContentTool
+import com.lantianhcgp.readlater.agent.tools.FormatContentTool
 import com.lantianhcgp.readlater.agent.tools.SummarizeTool
 import dagger.Module
 import dagger.Provides
@@ -41,4 +42,8 @@ object AgentModule {
     @Provides
     @Singleton
     fun provideAutoTagTool(): AutoTagTool = AutoTagTool()
+
+    @Provides
+    @Singleton
+    fun provideFormatContentTool(): FormatContentTool = FormatContentTool()
 }
