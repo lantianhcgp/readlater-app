@@ -50,7 +50,14 @@ class AgentOrchestrator @Inject constructor(
             val readingTime = fetchJson.optInt("readingTimeMinutes", 0)
 
             val summary = toolExecutor.executeSummarize(plainText, title, provider)
-            val tags = toolExecutor.executeAutoTag(plainText, title, provider)
+            val tagsJson = toolExecutor.executeAutoTag(plainText, title, provider)
+
+            val tags = try {
+                val arr = JSONArray(tagsJson)
+                (0 until arr.length()).map { arr.getString(it) }
+            } catch (_: Exception) {
+                emptyList()
+            }
 
             Log.d(TAG, "Done: title=$title, tags=$tags")
 
