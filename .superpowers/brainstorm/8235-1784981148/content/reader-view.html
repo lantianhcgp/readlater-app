@@ -1,0 +1,138 @@
+<h2>阅读器视图</h2>
+<p class="subtitle">点开文章后的阅读界面设计</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fff8f0;padding:16px;border-radius:8px;">
+      <div style="background:#fff;border-radius:16px;padding:0;max-width:240px;margin:0 auto;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;">
+        <!-- Top bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
+          <span style="color:#999;font-size:14px;">←</span>
+          <span style="color:#e65100;font-size:10px;font-weight:500;">medium.com</span>
+          <span style="color:#999;font-size:14px;">⋯</span>
+        </div>
+        <!-- Article content -->
+        <div style="padding:14px;">
+          <div style="color:#333;font-size:14px;font-weight:600;line-height:1.4;margin-bottom:8px;">How to Build Better Products</div>
+          <div style="color:#bbb;font-size:9px;margin-bottom:12px;">2024.01.15 · 5 分钟阅读</div>
+          <!-- AI Summary -->
+          <div style="background:#fff3e0;border-radius:10px;padding:10px;margin-bottom:12px;">
+            <div style="color:#e65100;font-size:9px;font-weight:600;margin-bottom:4px;">✨ AI 摘要</div>
+            <div style="color:#666;font-size:10px;line-height:1.5;">本文探讨了产品开发的三个核心原则：用户洞察、快速迭代和数据驱动决策...</div>
+          </div>
+          <!-- Article body -->
+          <div style="color:#555;font-size:11px;line-height:1.7;">
+            <p style="margin-bottom:8px;">Building great products starts with understanding your users deeply. It's not about features — it's about problems.</p>
+            <p style="margin-bottom:8px;color:#e65100;text-decoration:underline;">The first principle is empathy.</p>
+            <p>When you truly understand what your users need, the right solution becomes obvious...</p>
+          </div>
+        </div>
+        <!-- Bottom bar -->
+        <div style="display:flex;justify-content:space-around;padding:10px 14px;border-top:1px solid #f0f0f0;">
+          <span style="color:#e65100;font-size:12px;">🏷️ 标签</span>
+          <span style="color:#999;font-size:12px;">💬 笔记</span>
+          <span style="color:#999;font-size:12px;">📁 收藏</span>
+          <span style="color:#999;font-size:12px;">↗️ 分享</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 经典阅读器</h3>
+      <p>顶部网址栏 + AI 摘要卡片 + 正文 + 底部操作栏。Pocket / Omnivore 风格。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>优点</h4><ul><li>用户熟悉，学习成本零</li><li>AI 摘要一目了然</li><li>操作入口清晰</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>比较常规，没有惊喜</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fff8f0;padding:16px;border-radius:8px;">
+      <div style="background:#fff;border-radius:16px;padding:0;max-width:240px;margin:0 auto;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;">
+        <!-- Top bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
+          <span style="color:#999;font-size:14px;">←</span>
+          <span style="color:#999;font-size:14px;">⋯</span>
+        </div>
+        <!-- Article -->
+        <div style="padding:0 14px 14px;">
+          <div style="color:#333;font-size:15px;font-weight:600;line-height:1.4;margin-bottom:6px;">How to Build Better Products</div>
+          <div style="color:#bbb;font-size:9px;margin-bottom:14px;">medium.com · 5 分钟</div>
+          <!-- Highlighted text -->
+          <div style="color:#555;font-size:11px;line-height:1.7;">
+            <p style="margin-bottom:10px;">Building great products starts with understanding your users deeply. It's not about features — it's about problems.</p>
+            <div style="background:#fff3e0;padding:4px 0;border-left:3px solid #ff9800;margin-bottom:10px;padding-left:8px;">
+              <span style="color:#555;font-size:11px;">The first principle is empathy. When you truly understand what your users need...</span>
+            </div>
+            <p style="margin-bottom:10px;">The best product teams spend more time in discovery than in delivery. They ask "why" before "how."</p>
+          </div>
+        </div>
+        <!-- Floating highlight bar -->
+        <div style="margin:0 14px 14px;background:#333;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-around;">
+          <span style="color:#ff9800;font-size:11px;">🖍️ 高亮</span>
+          <span style="color:#fff;font-size:11px;">💬 笔记</span>
+          <span style="color:#fff;font-size:11px;">🏷️ 标签</span>
+          <span style="color:#fff;font-size:11px;">🗑️</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 标注优先阅读器</h3>
+      <p>沉浸式阅读 + 选中文字弹出标注工具栏。适合深度阅读和知识整理。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>优点</h4><ul><li>沉浸感强</li><li>标注体验好</li><li>知识管理属性强</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>AI 摘要没有默认展示</li><li>操作需要学习</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fff8f0;padding:16px;border-radius:8px;">
+      <div style="background:#fff;border-radius:16px;padding:0;max-width:240px;margin:0 auto;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;">
+        <!-- Top bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
+          <span style="color:#999;font-size:14px;">←</span>
+          <span style="color:#e65100;font-size:10px;font-weight:500;">medium.com</span>
+          <span style="color:#999;font-size:14px;">⋯</span>
+        </div>
+        <!-- Tabs: Summary / Full -->
+        <div style="display:flex;padding:0 14px;margin-bottom:12px;">
+          <div style="flex:1;text-align:center;padding:8px 0;color:#e65100;font-size:11px;font-weight:500;border-bottom:2px solid #ff9800;">✨ AI 摘要</div>
+          <div style="flex:1;text-align:center;padding:8px 0;color:#bbb;font-size:11px;">📖 全文</div>
+        </div>
+        <!-- Summary content -->
+        <div style="padding:0 14px 14px;">
+          <div style="color:#333;font-size:14px;font-weight:600;line-height:1.4;margin-bottom:10px;">How to Build Better Products</div>
+          <!-- Key points -->
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <span style="color:#e65100;font-size:10px;">1</span>
+              <span style="color:#555;font-size:10px;line-height:1.4;">用户洞察是产品开发的起点，不是功能列表</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <span style="color:#e65100;font-size:10px;">2</span>
+              <span style="color:#555;font-size:10px;line-height:1.4;">快速迭代比完美规划更重要</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <span style="color:#e65100;font-size:10px;">3</span>
+              <span style="color:#555;font-size:10px;line-height:1.4;">数据驱动决策，但不要被数据绑架</span>
+            </div>
+          </div>
+          <!-- Tags -->
+          <div style="display:flex;gap:4px;margin-top:10px;">
+            <span style="background:#fff3e0;color:#e65100;font-size:8px;padding:3px 8px;border-radius:10px;">产品</span>
+            <span style="background:#e8f5e9;color:#2e7d32;font-size:8px;padding:3px 8px;border-radius:10px;">设计</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. AI 优先阅读器</h3>
+      <p>默认展示 AI 摘要 + 要点提取，可切换到全文。适合快速筛选和信息获取。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>优点</h4><ul><li>快速判断值不值得读</li><li>AI 价值感最强</li><li>适合信息密集型用户</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>牺牲了原文阅读体验</li><li>过度依赖 AI 质量</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
