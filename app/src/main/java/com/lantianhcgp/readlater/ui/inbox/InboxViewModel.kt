@@ -2,6 +2,7 @@ package com.lantianhcgp.readlater.ui.inbox
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lantianhcgp.readlater.data.db.entity.Article
 import com.lantianhcgp.readlater.data.repository.ArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,5 +38,11 @@ class InboxViewModel @Inject constructor(
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         _searchQuery.value = query
+    }
+
+    fun deleteArticle(article: Article) {
+        viewModelScope.launch {
+            articleRepository.deleteArticle(article)
+        }
     }
 }

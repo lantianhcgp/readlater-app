@@ -1,7 +1,9 @@
 package com.lantianhcgp.readlater.ui.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,6 +62,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val debugEnabled by Logger.isEnabled.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(saveMessage) {
         saveMessage?.let {
@@ -129,8 +134,18 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            IconButton(onClick = { viewModel.refreshLogs() }) {
-                                Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                            Row {
+                                IconButton(onClick = { viewModel.refreshLogs() }) {
+                                    Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                                }
+                                IconButton(onClick = {
+                                    val clipManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val text = Logger.getFormattedLogs()
+                                    val clip = ClipData.newPlainText("logs", text)
+                                    clipManager.setPrimaryClip(clip)
+                                }) {
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "复制全部")
+                                }
                             }
                             IconButton(onClick = { viewModel.clearLogs() }) {
                                 Icon(Icons.Default.Clear, contentDescription = "清空")
