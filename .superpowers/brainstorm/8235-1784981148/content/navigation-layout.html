@@ -1,0 +1,98 @@
+<h2>App 导航布局方案</h2>
+<p class="subtitle">选择底部导航栏的结构，这是用户每天看到最多的界面</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1a1a2e;padding:20px;border-radius:8px;">
+      <!-- Mock: 3-tab layout -->
+      <div style="background:#16213e;border-radius:12px;padding:16px;max-width:220px;margin:0 auto;">
+        <div style="text-align:center;color:#e94560;font-weight:bold;margin-bottom:12px;">📝 ReadLater</div>
+        <div style="background:#0f3460;border-radius:8px;padding:12px;margin-bottom:8px;">
+          <div style="color:#fff;font-size:11px;">📄 文章标题示例</div>
+          <div style="color:#888;font-size:9px;margin-top:4px;">example.com · 3分钟前</div>
+        </div>
+        <div style="background:#0f3460;border-radius:8px;padding:12px;margin-bottom:8px;">
+          <div style="color:#fff;font-size:11px;">🔗 另一篇文章</div>
+          <div style="color:#888;font-size:9px;margin-top:4px;">blog.com · 1小时前</div>
+        </div>
+        <div style="display:flex;justify-content:space-around;margin-top:12px;border-top:1px solid #333;padding-top:8px;">
+          <div style="text-align:center;color:#e94560;font-size:10px;">📥<br>收件箱</div>
+          <div style="text-align:center;color:#666;font-size:10px;">📁<br>收藏夹</div>
+          <div style="text-align:center;color:#666;font-size:10px;">⚙️<br>设置</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 三标签极简</h3>
+      <p>收件箱 → 收藏夹 → 设置。最简单的结构，适合纯稍后阅读场景。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>优点</h4><ul><li>认知负担最低</li><li>核心流程一目了然</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>标签/分类入口深</li><li>扩展性差</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1a1a2e;padding:20px;border-radius:8px;">
+      <!-- Mock: 4-tab layout -->
+      <div style="background:#16213e;border-radius:12px;padding:16px;max-width:220px;margin:0 auto;">
+        <div style="text-align:center;color:#e94560;font-weight:bold;margin-bottom:12px;">📝 ReadLater</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="background:#0f3460;border-radius:4px;padding:4px 8px;color:#e94560;font-size:9px;">全部</div>
+          <div style="background:#0f3460;border-radius:4px;padding:4px 8px;color:#888;font-size:9px;">技术</div>
+          <div style="background:#0f3460;border-radius:4px;padding:4px 8px;color:#888;font-size:9px;">设计</div>
+        </div>
+        <div style="background:#0f3460;border-radius:8px;padding:12px;margin-bottom:8px;">
+          <div style="color:#fff;font-size:11px;">📄 文章标题示例</div>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <span style="background:#e9456033;color:#e94560;font-size:8px;padding:2px 6px;border-radius:10px;">技术</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-around;margin-top:12px;border-top:1px solid #333;padding-top:8px;">
+          <div style="text-align:center;color:#e94560;font-size:10px;">📥<br>收件箱</div>
+          <div style="text-align:center;color:#666;font-size:10px;">🏷️<br>标签</div>
+          <div style="text-align:center;color:#666;font-size:10px;">📁<br>收藏夹</div>
+          <div style="text-align:center;color:#666;font-size:10px;">⚙️<br>设置</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 四标签均衡（推荐）</h3>
+      <p>收件箱 → 标签 → 收藏夹 → 设置。标签管理独立出来，分类更方便。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>优点</h4><ul><li>标签入口一级可达</li><li>功能分区清晰</li><li>扩展性好</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>稍多一个 Tab</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1a1a2e;padding:20px;border-radius:8px;">
+      <!-- Mock: FAB layout -->
+      <div style="background:#16213e;border-radius:12px;padding:16px;max-width:220px;margin:0 auto;">
+        <div style="text-align:center;color:#e94560;font-weight:bold;margin-bottom:12px;">📝 ReadLater</div>
+        <div style="background:#0f3460;border-radius:8px;padding:12px;margin-bottom:8px;">
+          <div style="color:#fff;font-size:11px;">📄 文章标题示例</div>
+          <div style="color:#888;font-size:9px;margin-top:4px;">AI 摘要：这是一篇关于...</div>
+        </div>
+        <div style="position:relative;height:40px;">
+          <div style="position:absolute;right:10px;bottom:0;background:#e94560;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;">+</div>
+        </div>
+        <div style="display:flex;justify-content:space-around;margin-top:4px;border-top:1px solid #333;padding-top:8px;">
+          <div style="text-align:center;color:#e94560;font-size:10px;">📥<br>收件箱</div>
+          <div style="text-align:center;color:#666;font-size:10px;">📁<br>收藏夹</div>
+          <div style="text-align:center;color:#666;font-size:10px;">🔍<br>搜索</div>
+          <div style="text-align:center;color:#666;font-size:10px;">⚙️<br>设置</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. FAB 快速添加</h3>
+      <p>底部 Tab + 悬浮按钮快速添加链接。搜索独立为 Tab。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>优点</h4><ul><li>添加链接最快</li><li>搜索入口明显</li></ul></div>
+        <div class="cons"><h4>缺点</h4><ul><li>标签管理没有独立入口</li><li>FAB 可能遮挡内容</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
