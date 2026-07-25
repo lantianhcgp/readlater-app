@@ -2,7 +2,7 @@ package com.lantianhcgp.readlater.agent
 
 import android.util.Log
 import com.lantianhcgp.readlater.agent.tools.FetchContentTool
-import com.lantianhcgp.readlater.data.model.ArticleStatus
+import com.lantianhcgp.readlater.data.model.LlmConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -12,6 +12,7 @@ import javax.inject.Singleton
 data class AgentResult(
     val title: String? = null,
     val summary: String? = null,
+    val plainText: String? = null,
     val tags: List<String> = emptyList(),
     val imageUrl: String? = null,
     val sourceDomain: String? = null,
@@ -23,24 +24,23 @@ data class AgentResult(
 class AgentOrchestrator @Inject constructor(
     private val fetchContentTool: FetchContentTool,
     private val toolExecutor: ToolExecutor,
-    private val llmProvider: LlmProvider
+    private val llmProviderFactory: LlmProviderFactory
 ) {
 
     companion object {
         private const val TAG = "AgentOrchestrator"
     }
 
-    suspend fun processUrl(url: String): AgentResult = withContext(Dispatchers.IO) {
+    suspend fun processUrl(url: String, config: LlmConfig): AgentResult = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Processing URL: $url")
+            val provider = llmProviderFactory.create(config)
 
             val fetchResult = fetchContentTool.execute(url)
             val fetchJson = org.json.JSONObject(fetchResult)
 
             if (fetchJson.has("error")) {
-                return@withContext AgentResult(
-                    error = "Failed to fetch: ${fetchJson.getString("error")}"
-                )
+                return@withContext AgentResult(error = "Failed to fetch: ${fetchJson.getString("error")}")
             }
 
             val title = fetchJson.optString("title", null)
@@ -49,14 +49,15 @@ class AgentOrchestrator @Inject constructor(
             val sourceDomain = fetchJson.optString("sourceDomain", null)
             val readingTime = fetchJson.optInt("readingTimeMinutes", 0)
 
-            val summary = summarizeToolExecute(plainText, title)
-            val tags = autoTagToolExecute(plainText, title)
+            val summary = toolExecutor.executeSummarize(plainText, title, provider)
+            val tags = toolExecutor.executeAutoTag(plainText, title, provider)
 
-            Log.d(TAG, "Processing complete: title=$title, tags=$tags")
+            Log.d(TAG, "Done: title=$title, tags=$tags")
 
             AgentResult(
                 title = title,
                 summary = summary,
+                plainText = plainText,
                 tags = tags,
                 imageUrl = imageUrl,
                 sourceDomain = sourceDomain,
@@ -65,42 +66,6 @@ class AgentOrchestrator @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Error processing URL", e)
             AgentResult(error = e.message ?: "Unknown error")
-        }
-    }
-
-    private suspend fun summarizeToolExecute(content: String, title: String?): String? {
-        return try {
-            val toolCall = FunctionCall(
-                name = "summarize",
-                arguments = org.json.JSONObject().apply {
-                    put("content", content)
-                    title?.let { put("title", it) }
-                }.toString()
-            )
-            val result = toolExecutor.execute(toolCall)
-            val json = org.json.JSONObject(result)
-            json.optString("summary", null)
-        } catch (e: Exception) {
-            Log.e(TAG, "Summarize failed", e)
-            null
-        }
-    }
-
-    private suspend fun autoTagToolExecute(content: String, title: String?): List<String> {
-        return try {
-            val toolCall = FunctionCall(
-                name = "auto_tag",
-                arguments = org.json.JSONObject().apply {
-                    put("content", content)
-                    title?.let { put("title", it) }
-                }.toString()
-            )
-            val result = toolExecutor.execute(toolCall)
-            val arr = JSONArray(result)
-            (0 until arr.length()).map { arr.getString(it) }
-        } catch (e: Exception) {
-            Log.e(TAG, "Auto-tag failed", e)
-            emptyList()
         }
     }
 }

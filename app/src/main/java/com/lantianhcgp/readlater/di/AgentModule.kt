@@ -1,6 +1,5 @@
 package com.lantianhcgp.readlater.di
 
-import com.lantianhcgp.readlater.agent.LlmProvider
 import com.lantianhcgp.readlater.agent.tools.AutoTagTool
 import com.lantianhcgp.readlater.agent.tools.FetchContentTool
 import com.lantianhcgp.readlater.agent.tools.SummarizeTool
@@ -31,25 +30,15 @@ object AgentModule {
 
     @Provides
     @Singleton
-    fun provideFetchContentTool(
-        @Named("plain") client: OkHttpClient
-    ): FetchContentTool {
+    fun provideFetchContentTool(@Named("plain") client: OkHttpClient): FetchContentTool {
         return FetchContentTool(client)
     }
 
     @Provides
     @Singleton
-    fun provideSummarizeTool(
-        llmProvider: LlmProvider
-    ): SummarizeTool {
-        return SummarizeTool(llmProvider)
-    }
+    fun provideSummarizeTool(): SummarizeTool = SummarizeTool()
 
     @Provides
     @Singleton
-    fun provideAutoTagTool(
-        llmProvider: LlmProvider
-    ): AutoTagTool {
-        return AutoTagTool(llmProvider)
-    }
+    fun provideAutoTagTool(): AutoTagTool = AutoTagTool()
 }

@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.lantianhcgp.readlater.data.db.entity.ArticleTag
 import com.lantianhcgp.readlater.data.db.entity.Tag
 import kotlinx.coroutines.flow.Flow
 
@@ -24,7 +25,7 @@ interface TagDao {
     suspend fun insertTag(tag: Tag)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertArticleTag(articleTag: com.lantianhcgp.readlater.data.db.entity.ArticleTag)
+    suspend fun insertArticleTag(articleTag: ArticleTag)
 
     @Delete
     suspend fun deleteTag(tag: Tag)
