@@ -59,7 +59,9 @@ class ReaderViewModel @Inject constructor(
     }
 
     fun onTextSelected(text: String) {
-        _uiState.update { it.copy(showNoteDialog = true, pendingHighlightText = text) }
+        if (text.isNotBlank() && text.length >= 2) {
+            _uiState.update { it.copy(showNoteDialog = true, pendingHighlightText = text) }
+        }
     }
 
     fun dismissNoteDialog() {
