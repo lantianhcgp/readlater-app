@@ -23,7 +23,10 @@ import com.lantianhcgp.readlater.ui.components.TagChip
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun TagsScreen(viewModel: TagsViewModel = hiltViewModel()) {
+fun TagsScreen(
+    onTagClick: (String, String) -> Unit,
+    viewModel: TagsViewModel = hiltViewModel()
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -42,7 +45,10 @@ fun TagsScreen(viewModel: TagsViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 uiState.tags.forEach { tag ->
-                    TagChip(name = tag.name)
+                    TagChip(
+                        name = tag.name,
+                        onClick = { onTagClick(tag.id, tag.name) }
+                    )
                 }
             }
         }

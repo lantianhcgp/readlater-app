@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -40,12 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.lantianhcgp.readlater.data.model.ArticleStatus
 import com.lantianhcgp.readlater.ui.components.TagChip
 import org.jsoup.Jsoup
@@ -171,6 +174,19 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
+                    article.imageUrl?.let { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
+
                     Text(article.title ?: article.url, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
                     Text(buildString { append(article.sourceDomain); article.readingTimeMinutes?.let { append(" · $it 分钟阅读") } }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -253,7 +269,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                                     is ContentBlock.ListItem -> {
                                         Row(modifier = Modifier.padding(vertical = 2.dp)) {
                                             Text(
-                                                text = if (block.ordered) "• " else "• ",
+                                                text = "• ",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.primary
                                             )
@@ -306,19 +322,22 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                                         }
                                     }
                                     is ContentBlock.Image -> {
-                                        // Image display would require Coil - placeholder
-                                        Column(
+                                        AsyncImage(
+                                            model = block.url,
+                                            contentDescription = block.caption,
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(vertical = 8.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                                .padding(12.dp)
-                                        ) {
-                                            Text("🖼️ 图片", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            block.caption?.let {
-                                                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            }
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                        block.caption?.let {
+                                            Text(
+                                                text = it,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(bottom = 8.dp)
+                                            )
                                         }
                                     }
                                     is ContentBlock.Divider -> {

@@ -1,6 +1,7 @@
 package com.lantianhcgp.readlater.data.repository
 
 import com.lantianhcgp.readlater.data.db.dao.TagDao
+import com.lantianhcgp.readlater.data.db.entity.Article
 import com.lantianhcgp.readlater.data.db.entity.Tag
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
@@ -17,9 +18,9 @@ class TagRepository @Inject constructor(
     fun getTagsForArticle(articleId: String): Flow<List<Tag>> =
         tagDao.getTagsForArticle(articleId)
 
-    /**
-     * Create a new tag. Returns existing tag if name already exists.
-     */
+    fun getArticlesByTag(tagId: String): Flow<List<Article>> =
+        tagDao.getArticlesByTag(tagId)
+
     suspend fun createTag(name: String): Tag {
         val existing = tagDao.getTagByName(name)
         if (existing != null) return existing
@@ -29,9 +30,6 @@ class TagRepository @Inject constructor(
         return tag
     }
 
-    /**
-     * Delete a tag and all its article associations.
-     */
     suspend fun deleteTag(tag: Tag) {
         tagDao.deleteArticleTags(tag.id)
         tagDao.deleteTag(tag)

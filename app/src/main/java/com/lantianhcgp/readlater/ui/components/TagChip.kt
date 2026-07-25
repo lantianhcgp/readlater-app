@@ -8,21 +8,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lantianhcgp.readlater.ui.theme.AmberOrange
 
 @Composable
 fun TagChip(
     name: String,
-    onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     AssistChip(
-        onClick = onClick,
-        label = { Text(name) },
+        onClick = onClick ?: {},
+        label = {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.labelMedium
+            )
+        },
         modifier = modifier,
         colors = AssistChipDefaults.assistChipColors(
-            containerColor = AmberOrange.copy(alpha = 0.12f),
-            labelColor = MaterialTheme.colorScheme.onSurface
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
         ),
         border = null
     )

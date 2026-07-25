@@ -28,6 +28,7 @@ import com.lantianhcgp.readlater.ui.favorites.FavoritesScreen
 import com.lantianhcgp.readlater.ui.inbox.InboxScreen
 import com.lantianhcgp.readlater.ui.reader.ReaderScreen
 import com.lantianhcgp.readlater.ui.settings.SettingsScreen
+import com.lantianhcgp.readlater.ui.tags.TagArticlesScreen
 import com.lantianhcgp.readlater.ui.tags.TagsScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -82,7 +83,13 @@ fun AppNavigation() {
                     onAddClick = { navController.navigate("addLink") }
                 )
             }
-            composable(Screen.Tags.route) { TagsScreen() }
+            composable(Screen.Tags.route) {
+                TagsScreen(
+                    onTagClick = { tagId, tagName ->
+                        navController.navigate("tagArticles/$tagId/$tagName")
+                    }
+                )
+            }
             composable(Screen.Favorites.route) { FavoritesScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
             composable(
@@ -90,6 +97,21 @@ fun AppNavigation() {
                 arguments = listOf(navArgument("articleId") { type = NavType.StringType })
             ) {
                 ReaderScreen(onBack = { navController.popBackStack() })
+            }
+            composable(
+                route = "tagArticles/{tagId}/{tagName}",
+                arguments = listOf(
+                    navArgument("tagId") { type = NavType.StringType },
+                    navArgument("tagName") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val tagId = backStackEntry.arguments?.getString("tagId") ?: ""
+                val tagName = backStackEntry.arguments?.getString("tagName") ?: ""
+                TagArticlesScreen(
+                    tagName = tagName,
+                    onBack = { navController.popBackStack() },
+                    onArticleClick = { navController.navigate("reader/$it") }
+                )
             }
             composable("addLink") {
                 AddLinkScreen(onBack = { navController.popBackStack() })
