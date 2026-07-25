@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.lantianhcgp.readlater.agent.AgentOrchestrator
 import com.lantianhcgp.readlater.data.model.LlmConfig
 import com.lantianhcgp.readlater.data.repository.ArticleRepository
+import com.lantianhcgp.readlater.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,12 +43,14 @@ class AddLinkViewModel @Inject constructor(
     }
 
     private fun getLlmConfig(): LlmConfig {
-        return LlmConfig(
+        val config = LlmConfig(
             provider = prefs.getString("provider", "openai") ?: "openai",
             baseUrl = prefs.getString("baseUrl", "https://api.openai.com/v1") ?: "https://api.openai.com/v1",
             apiKey = prefs.getString("apiKey", "") ?: "",
             model = prefs.getString("model", "gpt-4o") ?: "gpt-4o"
         )
+        Logger.d("AddLinkVM", "使用配置: provider=${config.provider}, model=${config.model}")
+        return config
     }
 
     fun onUrlChange(url: String) {
@@ -58,19 +61,16 @@ class AddLinkViewModel @Inject constructor(
         val url = _uiState.value.url.trim()
         if (url.isEmpty()) return
 
-        val config = getLlmConfig()
-
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessing = true, error = null) }
             try {
                 val articleId = articleRepository.addArticle(url)
-                _uiState.update { it.copy(isSaved = true) }
-                articleRepository.processArticle(articleId, config)
+                Logger.i("AddLinkVM", "文章已保存: $articleId, 开始后台处理")
+                articleRepository.processArticle(articleId, getLlmConfig())
+                _uiState.update { it.copy(isSaved = true, isProcessing = false) }
             } catch (e: Exception) {
+                Logger.e("AddLinkVM", "保存失败: ${e.message}")
                 _uiState.update { it.copy(isProcessing = false, error = e.message) }
-            } finally {
-                _uiState.update { it.copy(isProcessing = false) }
-                agentOrchestrator.resetStep()
             }
         }
     }
