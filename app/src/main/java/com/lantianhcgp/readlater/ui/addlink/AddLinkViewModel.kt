@@ -2,6 +2,7 @@ package com.lantianhcgp.readlater.ui.addlink
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lantianhcgp.readlater.agent.AgentOrchestrator
 import com.lantianhcgp.readlater.data.model.LlmConfig
 import com.lantianhcgp.readlater.data.repository.ArticleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddLinkViewModel @Inject constructor(
-    private val articleRepository: ArticleRepository
+    private val articleRepository: ArticleRepository,
+    private val agentOrchestrator: AgentOrchestrator
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddLinkUiState())
@@ -26,6 +28,19 @@ class AddLinkViewModel @Inject constructor(
         apiKey = "",
         model = "gpt-4o"
     )
+
+    init {
+        viewModelScope.launch {
+            agentOrchestrator.currentStep.collect { step ->
+                _uiState.update { it.copy(currentStep = step) }
+            }
+        }
+        viewModelScope.launch {
+            agentOrchestrator.stepMessage.collect { message ->
+                _uiState.update { it.copy(stepMessage = message) }
+            }
+        }
+    }
 
     fun onUrlChange(url: String) {
         _uiState.update { it.copy(url = url) }
@@ -39,10 +54,13 @@ class AddLinkViewModel @Inject constructor(
             _uiState.update { it.copy(isProcessing = true, error = null) }
             try {
                 val articleId = articleRepository.addArticle(url)
-                _uiState.update { it.copy(isSaved = true, isProcessing = false) }
+                _uiState.update { it.copy(isSaved = true) }
                 articleRepository.processArticle(articleId, llmConfig)
             } catch (e: Exception) {
                 _uiState.update { it.copy(isProcessing = false, error = e.message) }
+            } finally {
+                _uiState.update { it.copy(isProcessing = false) }
+                agentOrchestrator.resetStep()
             }
         }
     }
