@@ -13,10 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Pending
-import androidx.compose.material.icons.filled.Spinner
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -135,7 +136,7 @@ fun AddLinkScreen(
                                 Icon(
                                     imageVector = when {
                                         isCompleted -> Icons.Default.CheckCircle
-                                        isCurrentStep -> Icons.Default.Spinner
+                                        isCurrentStep -> Icons.Default.PlayArrow
                                         else -> Icons.Default.Pending
                                     },
                                     contentDescription = null,
