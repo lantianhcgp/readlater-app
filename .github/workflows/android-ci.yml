@@ -29,15 +29,38 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Decode keystore
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release-key.jks
+
     - name: Build Release APK
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        KEYSTORE_PATH: release-key.jks
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: ./gradlew assembleRelease
 
-    - name: Upload APK Artifact
+    - name: Build Debug APK
+      if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+      run: ./gradlew assembleDebug
+
+    - name: Upload Release APK
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: actions/upload-artifact@v4
-      if: success()
       with:
         name: release-apk
         path: app/build/outputs/apk/release/*.apk
+        retention-days: 7
+
+    - name: Upload Debug APK
+      if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: app/build/outputs/apk/debug/*.apk
         retention-days: 7
 
     - name: Create GitHub Release
