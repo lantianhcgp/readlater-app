@@ -209,27 +209,20 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                                         buildString {
                                             appendLine("=== URL ===")
                                             appendLine(p.url)
-                                            appendLine("
-=== TITLE ===")
+                                            appendLine("\n=== TITLE ===")
                                             appendLine(p.title)
-                                            appendLine("
-=== RAW HTML (${p.rawHtml.length} chars) ===")
+                                            appendLine("\n=== RAW HTML (${p.rawHtml.length} chars) ===")
                                             appendLine(p.rawHtml.take(2000))
-                                            appendLine("
-=== FORMATTED (${p.formattedContent.length} chars) ===")
+                                            appendLine("\n=== FORMATTED (${p.formattedContent.length} chars) ===")
                                             appendLine(p.formattedContent.take(2000))
-                                            appendLine("
-=== CLEAN (${p.cleanContent.length} chars) ===")
+                                            appendLine("\n=== CLEAN (${p.cleanContent.length} chars) ===")
                                             appendLine(p.cleanContent.take(2000))
-                                            appendLine("
-=== SUMMARY ===")
+                                            appendLine("\n=== SUMMARY ===")
                                             appendLine(p.summary)
-                                            appendLine("
-=== TAGS ===")
+                                            appendLine("\n=== TAGS ===")
                                             appendLine(p.tags.toString())
                                             if (p.error != null) {
-                                                appendLine("
-=== ERROR ===")
+                                                appendLine("\n=== ERROR ===")
                                                 appendLine(p.error)
                                             }
                                         }
