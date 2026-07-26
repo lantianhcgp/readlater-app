@@ -23,7 +23,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
@@ -42,17 +41,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,6 +58,39 @@ import coil.compose.AsyncImage
 import com.lantianhcgp.readlater.data.model.ArticleStatus
 import com.lantianhcgp.readlater.ui.components.TagChip
 import kotlinx.coroutines.launch
+
+private fun stripTitleFromDisplay(text: String, title: String?): String {
+    if (title.isNullOrBlank()) return text
+    
+    val normalizedTitle = title.trim()
+    val lines = text.split("\n").toMutableList()
+    
+    while (lines.isNotEmpty()) {
+        val first = lines.first().trim()
+        
+        if (first.isBlank()) {
+            lines.removeAt(0)
+            continue
+        }
+        
+        val normalizedFirst = first
+            .removePrefix("## ")
+            .removePrefix("### ")
+            .removePrefix("# ")
+            .trim()
+        
+        if (normalizedFirst == normalizedTitle || 
+            normalizedFirst.contains(normalizedTitle) ||
+            normalizedTitle.contains(normalizedFirst)) {
+            lines.removeAt(0)
+            continue
+        }
+        
+        break
+    }
+    
+    return lines.joinToString("\n").trim()
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -158,6 +186,9 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                 val article = uiState.article
                 if (article != null) {
                     val fontSizeSp = uiState.fontSize.sp
+                    val displayText = remember(article.plainText, article.title) {
+                        stripTitleFromDisplay(article.plainText ?: "", article.title)
+                    }
 
                     Column(
                         modifier = Modifier
@@ -232,8 +263,8 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                         Spacer(Modifier.height(20.dp))
 
                         SelectionContainer {
-                            article.plainText?.let { text ->
-                                val lines = remember(text) { text.split("\n") }
+                            if (displayText.isNotBlank()) {
+                                val lines = remember(displayText) { displayText.split("\n") }
                                 
                                 lines.forEach { line ->
                                     val trimmed = line.trim()
@@ -315,7 +346,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
             }
 
             if (uiState.showNoteDialog) {
-                var noteText by remember { mutableStateOf("") }
+                var noteText by androidx.compose.runtime.mutableStateOf("")
                 AlertDialog(
                     onDismissRequest = { viewModel.dismissNoteDialog() },
                     title = { Text("添加标注") },
