@@ -44,7 +44,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -348,7 +347,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
             }
 
             if (uiState.showNoteDialog) {
-                var noteText by remember { mutableStateOf("") }
+                val noteTextState = remember { mutableStateOf("") }
                 AlertDialog(
                     onDismissRequest = { viewModel.dismissNoteDialog() },
                     title = { Text("添加标注") },
@@ -358,15 +357,15 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                             Text(uiState.pendingHighlightText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(12.dp))
                             OutlinedTextField(
-                                value = noteText,
-                                onValueChange = { noteText = it },
+                                value = noteTextState.value,
+                                onValueChange = { noteTextState.value = it },
                                 label = { Text("笔记（可选）") },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
                     },
                     confirmButton = {
-                        TextButton(onClick = { viewModel.saveHighlight(noteText) }) { Text("保存") }
+                        TextButton(onClick = { viewModel.saveHighlight(noteTextState.value) }) { Text("保存") }
                     },
                     dismissButton = {
                         TextButton(onClick = { viewModel.dismissNoteDialog() }) { Text("取消") }
