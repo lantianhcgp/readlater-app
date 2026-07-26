@@ -4,10 +4,8 @@ import android.util.Log
 import com.lantianhcgp.readlater.data.db.dao.ArticleDao
 import com.lantianhcgp.readlater.data.db.dao.TagDao
 import com.lantianhcgp.readlater.util.Logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -24,8 +22,6 @@ class DebugApiServer(
 ) {
     private var serverSocket: ServerSocket? = null
     private var running = false
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     fun start() {
         try {
             serverSocket = ServerSocket(port)
@@ -63,17 +59,12 @@ class DebugApiServer(
             val method = parts[0]
             val path = parts[1]
 
-            // Read headers to find content length
-            var contentLength = 0
             while (true) {
                 val line = reader.readLine() ?: break
                 if (line.isEmpty()) break
-                if (line.lowercase().startsWith("content-length:")) {
-                    contentLength = line.substringAfter(":").trim().toIntOrNull() ?: 0
-                }
             }
 
-            val response = when {
+            val response = runBlocking { when {
                 path == "/logs" && method == "GET" -> handleLogs()
                 path == "/articles" && method == "GET" -> handleArticles()
                 path.startsWith("/article/") && method == "GET" -> handleArticle(path)
@@ -83,7 +74,7 @@ class DebugApiServer(
                 path.startsWith("/raw/") && method == "GET" -> handleRawContent(path)
                 path == "/clear" && method == "POST" -> handleClear()
                 else -> """{"error": "Unknown endpoint. Available: /logs, /articles, /article/{id}, /config, /pipeline, /pipeline/history, /raw/{type}, /clear"}"""
-            }
+            } }
 
             sendResponse(socket, response)
         } catch (e: Exception) {
