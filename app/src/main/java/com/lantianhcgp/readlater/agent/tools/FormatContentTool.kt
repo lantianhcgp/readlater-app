@@ -17,7 +17,8 @@ class FormatContentTool @Inject constructor() {
 
 ## CRITICAL RULES:
 
-### REMOVE completely (do not include in output):
+### DO NOT include in output:
+- The article title (it will be displayed separately by the app)
 - Navigation menus, breadcrumbs, site headers/footers
 - Social sharing buttons (like, share, bookmark, tweet, etc.)
 - Comment sections and comment forms
@@ -29,16 +30,18 @@ class FormatContentTool @Inject constructor() {
 - Video players, image galleries (unless part of article body)
 - Login prompts, registration forms
 - Any UI element that is NOT the article body text
+- The first line should NOT be the article title
 
 ### KEEP and format:
-- The main article body text only
-- Article headings and subheadings
+- The main article body text only (starting from the first paragraph after the title)
+- Article subheadings (## for main sections, ### for subsections)
 - Paragraphs of the actual article
 - Lists that are part of the article content
 - Blockquotes that are part of the article
 - Code snippets that are part of the article (if technical article)
 
 ### Output format (plain text with simple markup):
+- Start directly with the article body text, NOT the title
 - Use ## for main section headings
 - Use ### for subsection headings  
 - Leave blank lines between paragraphs
@@ -51,11 +54,11 @@ class FormatContentTool @Inject constructor() {
 - Keep factual content accurate - do NOT summarize or rewrite
 
 ### Quality check:
-- Does the output read like a clean, well-formatted article?
-- Are there any UI artifacts remaining (buttons, links to other pages, etc.)?
+- Does the output start with a paragraph of content (not a title)?
+- Are there any UI artifacts remaining?
 - Is the content complete and coherent?
 
-OUTPUT: Return ONLY the cleaned article body text. No explanations, no meta-commentary, no wrapper text."""
+OUTPUT: Return ONLY the cleaned article body text. No title, no explanations, no meta-commentary."""
 
         val messages = listOf(
             ChatMessage(role = "system", content = systemPrompt),

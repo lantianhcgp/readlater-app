@@ -45,6 +45,27 @@ class AgentOrchestrator @Inject constructor(
     private val _stepMessage = MutableStateFlow<String>("")
     val stepMessage: StateFlow<String> = _stepMessage.asStateFlow()
 
+    private fun stripTitleFromContent(content: String, title: String?): String {
+        if (title.isNullOrBlank()) return content
+        var result = content.trimStart()
+        
+        if (result.startsWith(title)) {
+            result = result.removePrefix(title).trimStart()
+        }
+        
+        val lines = result.split("\n").toMutableList()
+        while (lines.isNotEmpty()) {
+            val first = lines.first().trim()
+            if (first.isBlank() || first == title || first.removePrefix("## ").trim() == title || first.removePrefix("### ").trim() == title) {
+                lines.removeAt(0)
+            } else {
+                break
+            }
+        }
+        
+        return lines.joinToString("\n").trim()
+    }
+
     suspend fun processUrl(url: String, config: LlmConfig): AgentResult = withContext(Dispatchers.IO) {
         try {
             Logger.i(TAG, "开始处理 URL: $url")
@@ -80,20 +101,21 @@ class AgentOrchestrator @Inject constructor(
             Logger.d(TAG, "开始用 AI 清洗排版内容...")
 
             val formattedContent = toolExecutor.executeFormatContent(content, title, provider)
-            Logger.i(TAG, "内容清洗完成: ${formattedContent.take(100)}...")
+            val cleanContent = stripTitleFromContent(formattedContent, title)
+            Logger.i(TAG, "内容清洗完成: ${cleanContent.take(100)}...")
 
             _currentStep.value = ProcessStep.SUMMARIZING
             _stepMessage.value = "AI 正在生成摘要..."
             Logger.d(TAG, "开始生成摘要...")
 
-            val summary = toolExecutor.executeSummarize(formattedContent, title, provider)
+            val summary = toolExecutor.executeSummarize(cleanContent, title, provider)
             Logger.i(TAG, "摘要生成完成: ${summary?.take(50)}...")
 
             Logger.d(TAG, "开始生成标签...")
             _currentStep.value = ProcessStep.TAGGING
             _stepMessage.value = "AI 正在生成标签..."
 
-            val tagsJson = toolExecutor.executeAutoTag(formattedContent, title, provider)
+            val tagsJson = toolExecutor.executeAutoTag(cleanContent, title, provider)
             Logger.i(TAG, "标签生成完成: $tagsJson")
 
             val tags = try {
@@ -103,8 +125,8 @@ class AgentOrchestrator @Inject constructor(
                 emptyList()
             }
 
-            val wordCount = formattedContent.split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
-            val readingTimeMin = maxOf(1, (wordCount.toDouble() / 200).toInt())
+            val wordCount = cleanContent.split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
+            val readingTimeMin = if (readingTime > 0) readingTime else maxOf(1, (wordCount.toDouble() / 200).toInt())
 
             Logger.i(TAG, "处理完成: 标题=$title, 标签=$tags, 字数=$wordCount")
             _currentStep.value = ProcessStep.DONE
@@ -113,7 +135,7 @@ class AgentOrchestrator @Inject constructor(
             AgentResult(
                 title = title,
                 summary = summary,
-                plainText = formattedContent,
+                plainText = cleanContent,
                 tags = tags,
                 imageUrl = imageUrl,
                 sourceDomain = sourceDomain,
