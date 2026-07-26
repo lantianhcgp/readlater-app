@@ -31,6 +31,8 @@ class FormatContentTool @Inject constructor() {
 - Login prompts, registration forms
 - Any UI element that is NOT the article body text
 - The first line should NOT be the article title
+- CRITICAL: The very first line of your output MUST be a paragraph of body text, never a heading or title
+- If you see the article title as the first thing in the HTML, SKIP IT completely and start from the first body paragraph
 
 ### KEEP and format:
 - The main article body text only (starting from the first paragraph after the title)
@@ -69,6 +71,24 @@ OUTPUT: Return ONLY the cleaned article body text. No title, no explanations, no
         )
         
         val response = provider.chat(messages, temperature = 0.15, maxTokens = 10000)
-        return response.content.orEmpty().trim()
+        var result = response.content.orEmpty().trim()
+        
+        // Post-process: strip title if AI still included it
+        if (!title.isNullOrBlank()) {
+            val lines = result.split("\n").toMutableList()
+            while (lines.isNotEmpty()) {
+                val first = lines.first().trim()
+                if (first.isBlank()) { lines.removeAt(0); continue }
+                val normalized = first.removePrefix("## ").removePrefix("### ").removePrefix("# ").trim()
+                if (normalized.equals(title.trim(), ignoreCase = true)) {
+                    lines.removeAt(0)
+                    continue
+                }
+                break
+            }
+            result = lines.joinToString("\n").trim()
+        }
+        
+        return result
     }
 }

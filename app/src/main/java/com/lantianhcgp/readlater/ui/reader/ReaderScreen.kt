@@ -80,9 +80,7 @@ private fun stripTitleFromDisplay(text: String, title: String?): String {
             .removePrefix("# ")
             .trim()
         
-        if (normalizedFirst == normalizedTitle || 
-            normalizedFirst.contains(normalizedTitle) ||
-            normalizedTitle.contains(normalizedFirst)) {
+        if (normalizedFirst == normalizedTitle) {
             lines.removeAt(0)
             continue
         }
@@ -132,7 +130,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
 
                     Spacer(Modifier.height(24.dp))
                     Text("🔤 字号", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(14.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("A", style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.width(8.dp))
@@ -212,7 +210,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                         }
 
                         Text(article.title ?: article.url, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(14.dp))
                         Text(buildString { append(article.sourceDomain); article.readingTimeMinutes?.let { append(" · $it 分钟阅读") } }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                         if (uiState.tags.isNotEmpty()) {
@@ -236,7 +234,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                         if (uiState.highlights.isNotEmpty()) {
                             Spacer(Modifier.height(16.dp))
                             Text("🖍️ 高亮标注", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(14.dp))
                             uiState.highlights.forEach { highlight ->
                                 Row(
                                     modifier = Modifier
@@ -271,7 +269,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                                     val trimmed = line.trim()
                                     when {
                                         trimmed.isEmpty() -> {
-                                            Spacer(Modifier.height(8.dp))
+                                            Spacer(Modifier.height(14.dp))
                                         }
                                         trimmed.startsWith("## ") -> {
                                             Text(

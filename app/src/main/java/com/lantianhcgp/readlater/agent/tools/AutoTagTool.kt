@@ -52,7 +52,7 @@ Example: ["人工智能", "深度学习", "技术趋势"]"""
             val arr = JSONArray(raw)
             val tags = (0 until arr.length()).map { 
                 arr.getString(it).lowercase().trim()
-            }.filter { it.isNotBlank() && it != "article" && it != "content" && it.length > 1 }.take(5)
+            }.filter { it.isNotBlank() && it !in listOf("article", "content", "reading", "text", "news", "post", "blog", "story") && it.length > 1 }.take(5)
             if (tags.isEmpty()) """["未分类"]""" else JSONArray(tags).toString()
         } catch (_: Exception) {
             """["未分类"]"""
