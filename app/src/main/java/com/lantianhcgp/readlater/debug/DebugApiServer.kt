@@ -13,7 +13,8 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
-import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
 import java.net.URLDecoder
 
 class DebugApiServer(
@@ -21,17 +22,24 @@ class DebugApiServer(
     private val articleDao: ArticleDao,
     private val tagDao: TagDao
 ) {
-    private var server: com.sun.net.httpserver.HttpServer? = null
+    private var serverSocket: ServerSocket? = null
+    private var running = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun start() {
         try {
-            server = com.sun.net.httpserver.HttpServer.create(InetSocketAddress(port), 0)
-            server?.createContext("/") { exchange ->
-                scope.launch { handleRequest(exchange) }
-            }
-            server?.executor = java.util.concurrent.Executors.newSingleThreadExecutor()
-            server?.start()
+            serverSocket = ServerSocket(port)
+            running = true
+            Thread {
+                while (running) {
+                    try {
+                        val client = serverSocket?.accept() ?: break
+                        Thread { handleClient(client) }.start()
+                    } catch (e: Exception) {
+                        if (running) Log.e("DebugApi", "Accept error: ${e.message}")
+                    }
+                }
+            }.start()
             Log.i("DebugApi", "Debug API server started on port $port")
             Logger.i("DebugApi", "Debug API server started on http://localhost:$port")
         } catch (e: Exception) {
@@ -40,15 +48,31 @@ class DebugApiServer(
     }
 
     fun stop() {
-        server?.stop(0)
-        server = null
+        running = false
+        try { serverSocket?.close() } catch (_: Exception) {}
+        serverSocket = null
         Log.i("DebugApi", "Debug API server stopped")
     }
 
-    private suspend fun handleRequest(exchange: com.sun.net.httpserver.HttpExchange) {
+    private fun handleClient(socket: Socket) {
         try {
-            val path = exchange.requestURI.path
-            val method = exchange.requestMethod
+            val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
+            val requestLine = reader.readLine() ?: return
+            val parts = requestLine.split(" ")
+            if (parts.size < 2) return
+            val method = parts[0]
+            val path = parts[1]
+
+            // Read headers to find content length
+            var contentLength = 0
+            while (true) {
+                val line = reader.readLine() ?: break
+                if (line.isEmpty()) break
+                if (line.lowercase().startsWith("content-length:")) {
+                    contentLength = line.substringAfter(":").trim().toIntOrNull() ?: 0
+                }
+            }
+
             val response = when {
                 path == "/logs" && method == "GET" -> handleLogs()
                 path == "/articles" && method == "GET" -> handleArticles()
@@ -56,13 +80,17 @@ class DebugApiServer(
                 path == "/config" && method == "GET" -> handleConfig()
                 path == "/pipeline" && method == "GET" -> handlePipeline()
                 path == "/pipeline/history" && method == "GET" -> handlePipelineHistory()
-                path == "/raw/" && method == "GET" -> handleRawContent(path)
+                path.startsWith("/raw/") && method == "GET" -> handleRawContent(path)
                 path == "/clear" && method == "POST" -> handleClear()
                 else -> """{"error": "Unknown endpoint. Available: /logs, /articles, /article/{id}, /config, /pipeline, /pipeline/history, /raw/{type}, /clear"}"""
             }
-            sendResponse(exchange, response)
+
+            sendResponse(socket, response)
         } catch (e: Exception) {
-            sendResponse(exchange, """{"error": "${e.message?.replace("\"", "'")}"}""", 500)
+            Log.e("DebugApi", "Handle error: ${e.message}")
+            try { sendResponse(socket, """{"error": "${e.message?.replace("\"", "'")}"}""") } catch (_: Exception) {}
+        } finally {
+            try { socket.close() } catch (_: Exception) {}
         }
     }
 
@@ -113,7 +141,7 @@ class DebugApiServer(
         val id = path.removePrefix("/article/")
         val article = articleDao.getArticleById(id)
             ?: return """{"error": "Article not found: $id"}"""
-        val tags = tagDao.getTagsForArticle(article.id)
+        val tags = tagDao.getTagsForArticleList(article.id)
         return JSONObject().apply {
             put("id", article.id)
             put("url", article.url)
@@ -133,14 +161,17 @@ class DebugApiServer(
 
     private fun handleConfig(): String {
         return JSONObject().apply {
-            put("message", "Config is stored in SharedPreferences. Check Settings screen.")
-            put("debugEndpoints", JSONArray().apply {
-                put("/logs - View all logs")
-                put("/articles - List all articles")
-                put("/article/{id} - View article details + plainText")
-                put("/pipeline - View last processing pipeline")
-                put("/pipeline/history - View pipeline history")
-                put("/clear - Clear debug data (POST)")
+            put("message", "Debug API is running")
+            put("endpoints", JSONArray().apply {
+                put("GET /logs - View all logs")
+                put("GET /articles - List all articles")
+                put("GET /article/{id} - View article details + plainText")
+                put("GET /pipeline - View last processing pipeline")
+                put("GET /pipeline/history - View pipeline history")
+                put("GET /raw/html - Raw HTML from last pipeline")
+                put("GET /raw/formatted - AI formatted content")
+                put("GET /raw/clean - Clean content after title strip")
+                put("POST /clear - Clear debug data")
             })
         }.toString()
     }
@@ -198,13 +229,19 @@ class DebugApiServer(
         }
     }
 
-    private fun sendResponse(exchange: com.sun.net.httpserver.HttpExchange, body: String, code: Int = 200) {
-        exchange.responseHeaders.set("Content-Type", "application/json; charset=utf-8")
-        exchange.responseHeaders.set("Access-Control-Allow-Origin", "*")
+    private fun sendResponse(socket: Socket, body: String) {
         val bytes = body.toByteArray(Charsets.UTF_8)
-        exchange.sendResponseHeaders(code, bytes.size.toLong())
-        val os: OutputStream = exchange.responseBody
+        val response = buildString {
+            append("HTTP/1.1 200 OK\r\n")
+            append("Content-Type: application/json; charset=utf-8\r\n")
+            append("Access-Control-Allow-Origin: *\r\n")
+            append("Content-Length: ${bytes.size}\r\n")
+            append("Connection: close\r\n")
+            append("\r\n")
+        }
+        val os: OutputStream = socket.getOutputStream()
+        os.write(response.toByteArray())
         os.write(bytes)
-        os.close()
+        os.flush()
     }
 }
