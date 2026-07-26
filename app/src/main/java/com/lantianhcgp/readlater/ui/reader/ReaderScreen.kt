@@ -299,7 +299,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
                                                 append("\n")
                                             }
                                             else -> {
-                                                withStyle(SpanStyle(fontSize = fontSizeSp, lineHeight = (fontSizeSp.value + 8).sp)) {
+                                                withStyle(SpanStyle(fontSize = fontSizeSp)) {
                                                     append(trimmed)
                                                 }
                                                 append("\n\n")
