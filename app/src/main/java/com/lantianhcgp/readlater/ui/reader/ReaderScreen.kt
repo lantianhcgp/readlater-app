@@ -59,6 +59,11 @@ import coil.compose.AsyncImage
 import com.lantianhcgp.readlater.data.model.ArticleStatus
 import com.lantianhcgp.readlater.ui.components.TagChip
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.withStyle
+
 
 private fun stripTitleFromDisplay(text: String, title: String?): String {
     if (title.isNullOrBlank()) return text
@@ -261,76 +266,55 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
 
                         Spacer(Modifier.height(20.dp))
 
-                        SelectionContainer {
-                            if (displayText.isNotBlank()) {
-                                val lines = remember(displayText) { displayText.split("\n") }
-                                
-                                lines.forEach { line ->
-                                    val trimmed = line.trim()
-                                    when {
-                                        trimmed.isEmpty() -> {
-                                            Spacer(Modifier.height(14.dp))
-                                        }
-                                        trimmed.startsWith("## ") -> {
-                                            Text(
-                                                text = trimmed.removePrefix("## "),
-                                                style = MaterialTheme.typography.headlineSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(vertical = 8.dp)
-                                            )
-                                        }
-                                        trimmed.startsWith("### ") -> {
-                                            Text(
-                                                text = trimmed.removePrefix("### "),
-                                                style = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(vertical = 6.dp)
-                                            )
-                                        }
-                                        trimmed.startsWith("> ") -> {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 4.dp)
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                                    .padding(12.dp)
-                                            ) {
-                                                Text(
-                                                    text = trimmed.removePrefix("> "),
-                                                    style = MaterialTheme.typography.bodyLarge.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    fontSize = fontSizeSp
-                                                )
+                        if (displayText.isNotBlank()) {
+                            val annotatedText = remember(displayText, fontSizeSp) {
+                                val lines = displayText.split("\n")
+                                buildAnnotatedString {
+                                    for (line in lines) {
+                                        val trimmed = line.trim()
+                                        when {
+                                            trimmed.isEmpty() -> {
+                                                append("\n\n")
                                             }
-                                        }
-                                        trimmed.startsWith("- ") || trimmed.startsWith("• ") -> {
-                                            Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                                                Text(
-                                                    text = "• ",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    fontSize = fontSizeSp
-                                                )
-                                                Text(
-                                                    text = trimmed.removePrefix("- ").removePrefix("• "),
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    lineHeight = (fontSizeSp.value + 12).sp,
-                                                    fontSize = fontSizeSp
-                                                )
+                                            trimmed.startsWith("## ") -> {
+                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)) {
+                                                    append(trimmed.removePrefix("## "))
+                                                }
+                                                append("\n\n")
                                             }
-                                        }
-                                        else -> {
-                                            Text(
-                                                text = trimmed,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                lineHeight = (fontSizeSp.value + 12).sp,
-                                                fontSize = fontSizeSp,
-                                                modifier = Modifier.padding(vertical = 2.dp)
-                                            )
+                                            trimmed.startsWith("### ") -> {
+                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)) {
+                                                    append(trimmed.removePrefix("### "))
+                                                }
+                                                append("\n\n")
+                                            }
+                                            trimmed.startsWith("> ") -> {
+                                                withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                                                    append("    " + trimmed.removePrefix("> "))
+                                                }
+                                                append("\n\n")
+                                            }
+                                            trimmed.startsWith("- ") || trimmed.startsWith("• ") -> {
+                                                append("• " + trimmed.removePrefix("- ").removePrefix("• "))
+                                                append("\n")
+                                            }
+                                            else -> {
+                                                withStyle(SpanStyle(fontSize = fontSizeSp, lineHeight = (fontSizeSp.value + 8).sp)) {
+                                                    append(trimmed)
+                                                }
+                                                append("\n\n")
+                                            }
                                         }
                                     }
                                 }
+                            }
+                            SelectionContainer {
+                                Text(
+                                    text = annotatedText,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontSize = fontSizeSp,
+                                    lineHeight = (fontSizeSp.value + 8).sp
+                                )
                             }
                         }
 
