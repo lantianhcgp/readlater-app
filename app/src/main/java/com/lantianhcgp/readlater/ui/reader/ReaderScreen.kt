@@ -41,6 +41,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -346,7 +348,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
             }
 
             if (uiState.showNoteDialog) {
-                var noteText by remember { androidx.compose.runtime.mutableStateOf("") }
+                var noteText by remember { mutableStateOf("") }
                 AlertDialog(
                     onDismissRequest = { viewModel.dismissNoteDialog() },
                     title = { Text("添加标注") },
