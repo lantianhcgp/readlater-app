@@ -47,20 +47,33 @@ class AgentOrchestrator @Inject constructor(
 
     private fun stripTitleFromContent(content: String, title: String?): String {
         if (title.isNullOrBlank()) return content
+        
+        val normalizedTitle = title.trim()
         var result = content.trimStart()
-        
-        if (result.startsWith(title)) {
-            result = result.removePrefix(title).trimStart()
-        }
-        
         val lines = result.split("\n").toMutableList()
+        
         while (lines.isNotEmpty()) {
             val first = lines.first().trim()
-            if (first.isBlank() || first == title || first.removePrefix("## ").trim() == title || first.removePrefix("### ").trim() == title) {
+            
+            if (first.isBlank()) {
                 lines.removeAt(0)
-            } else {
-                break
+                continue
             }
+            
+            val normalizedFirst = first
+                .removePrefix("## ")
+                .removePrefix("### ")
+                .removePrefix("# ")
+                .trim()
+            
+            if (normalizedFirst == normalizedTitle || 
+                normalizedFirst.contains(normalizedTitle) ||
+                normalizedTitle.contains(normalizedFirst)) {
+                lines.removeAt(0)
+                continue
+            }
+            
+            break
         }
         
         return lines.joinToString("\n").trim()
