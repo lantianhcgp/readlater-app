@@ -94,7 +94,7 @@ class AgentOrchestrator @Inject constructor(
             val fetchJson = org.json.JSONObject(fetchResult)
 
             if (fetchJson.has("error")) {
-                val errorMsg = "抓取失败: ${fetchJson.getString("error")}"
+                val errorMsg = "抓取失败: ${fetchJson.getString("error")}. URL: ${url.take(80)}"
                 Logger.e(TAG, errorMsg)
                 _currentStep.value = ProcessStep.ERROR
                 _stepMessage.value = errorMsg

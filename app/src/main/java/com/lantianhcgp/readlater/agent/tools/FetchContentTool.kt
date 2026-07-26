@@ -1,6 +1,7 @@
 package com.lantianhcgp.readlater.agent.tools
 
 import com.lantianhcgp.readlater.util.HtmlParser
+import com.lantianhcgp.readlater.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -21,17 +22,37 @@ class FetchContentTool @Inject constructor(
         try {
             val request = Request.Builder()
                 .url(url)
-                .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36")
+                .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.230 Mobile Safari/537.36")
+                .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                .addHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+                .addHeader("Accept-Encoding", "gzip, deflate, br")
+                .addHeader("Connection", "keep-alive")
+                .addHeader("Upgrade-Insecure-Requests", "1")
+                .addHeader("Sec-Fetch-Dest", "document")
+                .addHeader("Sec-Fetch-Mode", "navigate")
+                .addHeader("Sec-Fetch-Site", "none")
+                .addHeader("Sec-Fetch-User", "?1")
+                .addHeader("Cache-Control", "max-age=0")
                 .build()
 
+            Logger.d("FetchContent", "发送请求: $url")
             val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: throw Exception("Empty response body")
+            val body = response.body?.string() ?: ""
+
+            Logger.d("FetchContent", "响应码: ${response.code}, 内容长度: ${body.length}")
 
             if (!response.isSuccessful) {
-                throw Exception("HTTP ${response.code}: $body")
+                val errorMsg = "HTTP ${response.code}: ${body.take(200)}"
+                Logger.e("FetchContent", errorMsg)
+                throw Exception(errorMsg)
+            }
+
+            if (body.isEmpty()) {
+                throw Exception("响应内容为空")
             }
 
             val parsed = HtmlParser.parse(body, url)
+            Logger.d("FetchContent", "解析完成: title=${parsed.title.take(50)}, contentLength=${parsed.content.length}")
 
             JSONObject().apply {
                 put("title", parsed.title)
@@ -42,8 +63,10 @@ class FetchContentTool @Inject constructor(
                 put("readingTimeMinutes", parsed.readingTimeMinutes)
             }.toString()
         } catch (e: Exception) {
+            val msg = e.message ?: e.javaClass.simpleName
+            Logger.e("FetchContent", "抓取失败: $msg")
             JSONObject().apply {
-                put("error", e.message ?: "Unknown error")
+                put("error", msg)
             }.toString()
         }
     }
