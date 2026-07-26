@@ -346,7 +346,7 @@ fun ReaderScreen(onBack: () -> Unit, viewModel: ReaderViewModel = hiltViewModel(
             }
 
             if (uiState.showNoteDialog) {
-                var noteText by remember { mutableStateOf("") }
+                var noteText by remember { androidx.compose.runtime.mutableStateOf("") }
                 AlertDialog(
                     onDismissRequest = { viewModel.dismissNoteDialog() },
                     title = { Text("添加标注") },
