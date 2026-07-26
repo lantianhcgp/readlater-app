@@ -37,6 +37,9 @@ interface TagDao {
     @Query("SELECT tags.* FROM tags INNER JOIN article_tags ON tags.id = article_tags.tagId WHERE article_tags.articleId = :articleId")
     fun getTagsForArticle(articleId: String): Flow<List<Tag>>
 
+    @Query("SELECT tags.* FROM tags INNER JOIN article_tags ON tags.id = article_tags.tagId WHERE article_tags.articleId = :articleId")
+    suspend fun getTagsForArticleList(articleId: String): List<Tag>
+
     @Query("SELECT articles.* FROM articles INNER JOIN article_tags ON articles.id = article_tags.articleId WHERE article_tags.tagId = :tagId ORDER BY articles.updatedAt DESC")
     fun getArticlesByTag(tagId: String): Flow<List<Article>>
 }

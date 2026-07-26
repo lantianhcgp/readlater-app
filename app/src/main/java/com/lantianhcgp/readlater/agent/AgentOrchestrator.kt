@@ -2,6 +2,8 @@ package com.lantianhcgp.readlater.agent
 
 import com.lantianhcgp.readlater.agent.tools.FetchContentTool
 import com.lantianhcgp.readlater.data.model.LlmConfig
+import com.lantianhcgp.readlater.debug.DebugData
+import com.lantianhcgp.readlater.debug.PipelineSnapshot
 import com.lantianhcgp.readlater.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,9 +68,7 @@ class AgentOrchestrator @Inject constructor(
                 .removePrefix("# ")
                 .trim()
             
-            if (normalizedFirst == normalizedTitle || 
-                normalizedFirst.contains(normalizedTitle) ||
-                normalizedTitle.contains(normalizedFirst)) {
+            if (normalizedFirst == normalizedTitle) {
                 lines.removeAt(0)
                 continue
             }
@@ -109,6 +109,8 @@ class AgentOrchestrator @Inject constructor(
 
             Logger.i(TAG, "网页抓取成功: 标题=$title, 域名=$sourceDomain")
 
+            var pipeline = PipelineSnapshot(url = url, title = title ?: "", rawHtml = content)
+
             _currentStep.value = ProcessStep.FORMATTING
             _stepMessage.value = "AI 正在清洗排版内容..."
             Logger.d(TAG, "开始用 AI 清洗排版内容...")
@@ -116,6 +118,7 @@ class AgentOrchestrator @Inject constructor(
             val formattedContent = toolExecutor.executeFormatContent(content, title, provider)
             val cleanContent = stripTitleFromContent(formattedContent, title)
             Logger.i(TAG, "内容清洗完成: ${cleanContent.take(100)}...")
+            pipeline = pipeline.copy(formattedContent = formattedContent, cleanContent = cleanContent)
 
             _currentStep.value = ProcessStep.SUMMARIZING
             _stepMessage.value = "AI 正在生成摘要..."
@@ -123,6 +126,7 @@ class AgentOrchestrator @Inject constructor(
 
             val summary = toolExecutor.executeSummarize(cleanContent, title, provider)
             Logger.i(TAG, "摘要生成完成: ${summary?.take(50)}...")
+            pipeline = pipeline.copy(summary = summary ?: "")
 
             Logger.d(TAG, "开始生成标签...")
             _currentStep.value = ProcessStep.TAGGING
@@ -137,11 +141,13 @@ class AgentOrchestrator @Inject constructor(
             } catch (_: Exception) {
                 emptyList()
             }
+            pipeline = pipeline.copy(tags = tags)
 
             val wordCount = cleanContent.split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
             val readingTimeMin = if (readingTime > 0) readingTime else maxOf(1, (wordCount.toDouble() / 200).toInt())
 
             Logger.i(TAG, "处理完成: 标题=$title, 标签=$tags, 字数=$wordCount")
+            DebugData.updatePipeline(pipeline)
             _currentStep.value = ProcessStep.DONE
             _stepMessage.value = "处理完成"
 
@@ -156,6 +162,7 @@ class AgentOrchestrator @Inject constructor(
             )
         } catch (e: Exception) {
             Logger.e(TAG, "处理出错: ${e.message}")
+            DebugData.updatePipeline(PipelineSnapshot(url = url, error = e.message))
             _currentStep.value = ProcessStep.ERROR
             _stepMessage.value = "处理失败: ${e.message}"
             AgentResult(error = e.message ?: "Unknown error")

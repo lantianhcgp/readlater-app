@@ -16,6 +16,9 @@ interface ArticleDao {
     @Query("SELECT * FROM articles ORDER BY createdAt DESC")
     fun getAllArticles(): Flow<List<Article>>
 
+    @Query("SELECT * FROM articles ORDER BY createdAt DESC")
+    suspend fun getAllArticlesList(): List<Article>
+
     @Query("SELECT * FROM articles WHERE status = :status ORDER BY createdAt DESC")
     fun getArticlesByStatus(status: ArticleStatus): Flow<List<Article>>
 
