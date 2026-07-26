@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lantianhcgp.readlater.debug.DebugData
 import com.lantianhcgp.readlater.util.Logger
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +61,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val logs by viewModel.logs.collectAsStateWithLifecycle()
     val saveMessage by viewModel.saveMessage.collectAsStateWithLifecycle()
     val debugEnabled by Logger.isEnabled.collectAsStateWithLifecycle()
+    val showPipeline by viewModel.showPipeline.collectAsStateWithLifecycle()
+    val pipeline by viewModel.pipeline.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -170,6 +173,136 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                                         }
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { viewModel.togglePipeline() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.BugReport, contentDescription = null)
+                Text(if (showPipeline) "隐藏 Pipeline" else "查看 Pipeline 数据", modifier = Modifier.padding(start = 8.dp))
+            }
+
+            AnimatedVisibility(visible = showPipeline) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Pipeline 数据", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Row {
+                                IconButton(onClick = { viewModel.refreshPipeline() }) {
+                                    Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                                }
+                                IconButton(onClick = {
+                                    val text = pipeline?.let { p ->
+                                        buildString {
+                                            appendLine("=== URL ===")
+                                            appendLine(p.url)
+                                            appendLine("
+=== TITLE ===")
+                                            appendLine(p.title)
+                                            appendLine("
+=== RAW HTML (${p.rawHtml.length} chars) ===")
+                                            appendLine(p.rawHtml.take(2000))
+                                            appendLine("
+=== FORMATTED (${p.formattedContent.length} chars) ===")
+                                            appendLine(p.formattedContent.take(2000))
+                                            appendLine("
+=== CLEAN (${p.cleanContent.length} chars) ===")
+                                            appendLine(p.cleanContent.take(2000))
+                                            appendLine("
+=== SUMMARY ===")
+                                            appendLine(p.summary)
+                                            appendLine("
+=== TAGS ===")
+                                            appendLine(p.tags.toString())
+                                            if (p.error != null) {
+                                                appendLine("
+=== ERROR ===")
+                                                appendLine(p.error)
+                                            }
+                                        }
+                                    } ?: "No pipeline data"
+                                    val clipManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipManager.setPrimaryClip(ClipData.newPlainText("pipeline", text))
+                                }) {
+                                    Icon(Icons.Default.ContentCopy, contentDescription = "复制全部")
+                                }
+                            }
+                        }
+
+                        if (pipeline == null) {
+                            Text("暂无数据，请先处理一篇文章", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        } else {
+                            val p = pipeline!!
+                            // URL
+                            Text("URL", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Text(p.url, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), maxLines = 2)
+                            Spacer(Modifier.height(8.dp))
+
+                            // Title
+                            Text("标题", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Text(p.title.ifEmpty { "(空)" }, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp))
+                            Spacer(Modifier.height(8.dp))
+
+                            // Content lengths
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("HTML: ${p.rawHtml.length}", style = MaterialTheme.typography.labelSmall)
+                                Text("格式化: ${p.formattedContent.length}", style = MaterialTheme.typography.labelSmall)
+                                Text("清洗: ${p.cleanContent.length}", style = MaterialTheme.typography.labelSmall)
+                            }
+                            Spacer(Modifier.height(8.dp))
+
+                            // Tags
+                            if (p.tags.isNotEmpty()) {
+                                Text("标签", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                Text(p.tags.joinToString(", "), style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp))
+                                Spacer(Modifier.height(8.dp))
+                            }
+
+                            // Error
+                            if (p.error != null) {
+                                Text("错误", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                Text(p.error, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), color = MaterialTheme.colorScheme.error)
+                                Spacer(Modifier.height(8.dp))
+                            }
+
+                            // Summary
+                            if (p.summary.isNotEmpty()) {
+                                Text("摘要", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                Text(p.summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp), maxLines = 3)
+                                Spacer(Modifier.height(8.dp))
+                            }
+
+                            // Raw HTML preview
+                            Text("原始 HTML (前500字)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Column(modifier = Modifier.height(100.dp).verticalScroll(rememberScrollState())) {
+                                Text(p.rawHtml.take(500), style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp))
+                            }
+                            Spacer(Modifier.height(8.dp))
+
+                            // Formatted content preview
+                            Text("AI 格式化 (前500字)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Column(modifier = Modifier.height(100.dp).verticalScroll(rememberScrollState())) {
+                                Text(p.formattedContent.take(500), style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp))
+                            }
+                            Spacer(Modifier.height(8.dp))
+
+                            // Clean content preview
+                            Text("清洗后 (前500字)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Column(modifier = Modifier.height(100.dp).verticalScroll(rememberScrollState())) {
+                                Text(p.cleanContent.take(500), style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp))
                             }
                         }
                     }

@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import com.lantianhcgp.readlater.data.model.LlmConfig
+import com.lantianhcgp.readlater.debug.DebugData
+import com.lantianhcgp.readlater.debug.PipelineSnapshot
 import com.lantianhcgp.readlater.util.LogEntry
 import com.lantianhcgp.readlater.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,8 +35,23 @@ class SettingsViewModel @Inject constructor(
     private val _saveMessage = MutableStateFlow<String?>(null)
     val saveMessage: StateFlow<String?> = _saveMessage.asStateFlow()
 
+    private val _showPipeline = MutableStateFlow(false)
+    val showPipeline: StateFlow<Boolean> = _showPipeline.asStateFlow()
+
+    private val _pipeline = MutableStateFlow<PipelineSnapshot?>(null)
+    val pipeline: StateFlow<PipelineSnapshot?> = _pipeline.asStateFlow()
+
     init {
         loadConfig()
+    }
+
+    fun togglePipeline() {
+        _showPipeline.update { !it }
+        if (_showPipeline.value) refreshPipeline()
+    }
+
+    fun refreshPipeline() {
+        _pipeline.value = DebugData.lastPipeline.value
     }
 
     private fun loadConfig() {
